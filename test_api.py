@@ -1,7 +1,9 @@
+import os
 import requests
 
 # Test that the backend is working
 url = "http://localhost:8000/generate-grant"
+headers = {"X-API-Key": os.environ.get("SAVANA_API_KEY")}
 
 test_data = {
     "nonprofit_name": "Savana Signatures Foundation",
@@ -14,12 +16,12 @@ test_data = {
 }
 
 print("Sending request to AI backend...")
-response = requests.post(url, json=test_data)
+response = requests.post(url, json=test_data, headers=headers)
 
 if response.status_code == 200:
     result = response.json()
-    print("\n✅ SUCCESS! Here's the generated grant text:\n")
+    print("\nSUCCESS! Here's the generated grant text:\n")
     print(result["grant_text"])
 else:
-    print(f"\n❌ Error: {response.status_code}")
+    print(f"\nError: {response.status_code}")
     print(response.json())
