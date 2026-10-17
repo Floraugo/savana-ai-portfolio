@@ -1,24 +1,33 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import anthropic
+import logging
 import os
 
 app = FastAPI()
+logger = logging.getLogger(_name_)
 
-# Allow the frontend (Joy's UI) to talk to this backend
+# Only allow requests from the Savana frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change this to Joy's frontend URL in production
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["https://savana-scribe.lovable.app"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "X-API-Key"],
 )
 
-# Claude client — reads your API key from environment variable
+# Anthropic client, key loaded from environment
 client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 
-# This is the shape of data we expect from the frontend
+# Reject requests without a valid API key
+def verify_api_key(x_api_key: str = Header(default=None)):
+    expected_key = os.environ.get("SAVANA_API_KEY")
+    if not expected_key or x_api_key != expected_key:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+
+
+# Request body for /generate-grant
 class GrantRequest(BaseModel):
     nonprofit_name: str
     mission: str
@@ -34,10 +43,10 @@ def root():
     return {"status": "Grant Genius AI is running"}
 
 
-@app.post("/generate-grant")
+@app.post("/generate-grant", dependencies=[Depends(verify_api_key)])
 def generate_grant(data: GrantRequest):
     try:
-        prompt = f"""You are an expert nonprofit grant writer with 20 years of experience 
+        prompt = f"""You are an expert nonprofit grant writer with 20 years of experience
 writing successful grant proposals. Write a compelling executive summary for the following:
 
 Nonprofit: {data.nonprofit_name}
@@ -68,4 +77,9 @@ Be specific, compelling, and professional."""
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Log the full error, return a generic message to the client
+        logger.error(f"Grant generation failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Something went wrong generating the grant. Please try again."
+        )
