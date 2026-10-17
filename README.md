@@ -28,25 +28,21 @@ I built this during my AI Developer placement at Legal Pythia. A teammate built 
 
 ## Running locally
 
-Install the dependencies:
+1. Install the dependencies: pip install -r requirements.txt
+2. Set your Anthropic key: export ANTHROPIC_API_KEY="your-anthropic-key"
+3. Set your API key for the endpoint: export SAVANA_API_KEY="your-chosen-key"
+4. Start the server: uvicorn main:app --reload
+5. In a second terminal, run the test script: python3 test_api.py
 
+You can also try the endpoint at http://localhost:8000/docs
 
-pip install -r requirements.txt
+## Endpoints
 
+- GET / – health check
+- POST /generate-grant – returns a grant executive summary
 
-Set the environment variables:
+## What I'd add next
 
-
-export ANTHROPIC_API_KEY="your-anthropic-key"
-export SAVANA_API_KEY="your-chosen-key"
-
-
-Start the server:
-
-
-uvicorn main:app --reload
-
-
-Then, in a second terminal, run the test script:
-
-```
+- Streaming, so the text appears as it's generated
+- Rate limiting on the endpoint
+- Automated tests with pytest
