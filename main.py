@@ -6,7 +6,7 @@ import logging
 import os
 
 app = FastAPI()
-logger = logging.getLogger(_name_)
+logger = logging.getLogger(__name__)
 
 # Only allow requests from the Savana frontend
 app.add_middleware(
